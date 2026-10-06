@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: tourist-guide
+    runtime: python
+    buildCommand: pip install -r Backend/requirements.txt
+    startCommand: gunicorn --chdir Backend app:app
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MURF_API_KEY
+        sync: false
