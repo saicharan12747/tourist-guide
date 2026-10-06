@@ -1,6 +1,7 @@
 import base64
 import os
 from pathlib import Path
+import time
 
 import requests
 from flask import Flask, jsonify, request, send_from_directory
@@ -81,10 +82,18 @@ def generate_speech(text, voice_id, locale, api_key):
 def generate_description(place, answer_type, language, api_key):
     prompt = PROMPTS[answer_type].format(place=place, language=language)
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model="gemini-3.1-flash-lite",
-        contents=prompt
-    )
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model="gemini-3.1-flash-lite",
+                contents=prompt
+            )
+            break
+        except APIError as error:
+            if error.code != 503 or attempt == 2:
+                raise
+            time.sleep(2 ** attempt)
+
     if not response.text:
         raise RuntimeError("The text generation service returned an empty response.")
     return response.text
@@ -151,9 +160,23 @@ def generate_audio_guide():
             data["locale"],
             os.environ["MURF_API_KEY"]
         )
-    except APIError:
+    except APIError as error:
         app.logger.exception("Gemini text generation failed")
-        return jsonify(error="Gemini could not generate the guide. Check your API key and quota."), 502
+        if error.code == 503:
+            return jsonify(
+                error="Gemini is temporarily overloaded. Please try again shortly."
+            ), 503
+        if error.code == 429:
+            return jsonify(
+                error="Gemini API quota is temporarily unavailable. Please try again later."
+            ), 503
+        if error.code in (401, 403):
+            return jsonify(
+                error="Gemini rejected the API key. Check the GEMINI_API_KEY setting."
+            ), 502
+        return jsonify(
+            error="Gemini could not generate the guide. Please try again later."
+        ), 502
     except requests.RequestException:
         app.logger.exception("Murf speech generation failed")
         return jsonify(error="Murf could not generate audio. Check your API key, quota, and connection."), 502
