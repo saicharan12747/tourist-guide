@@ -2,6 +2,7 @@ services:
   - type: web
     name: tourist-guide
     runtime: python
+    plan: free
     buildCommand: pip install -r Backend/requirements.txt
     startCommand: gunicorn --chdir Backend app:app
     healthCheckPath: /health
