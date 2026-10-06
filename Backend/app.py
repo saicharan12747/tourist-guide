@@ -82,18 +82,30 @@ def generate_speech(text, voice_id, locale, api_key):
 def generate_description(place, answer_type, language, api_key):
     prompt = PROMPTS[answer_type].format(place=place, language=language)
     client = genai.Client(api_key=api_key)
-    for attempt in range(3):
-        try:
-            response = client.models.generate_content(
-                model="gemini-3.1-flash-lite",
-                contents=prompt
-            )
-            break
-        except APIError as error:
-            if error.code != 503 or attempt == 2:
+    response = None
+    last_error = None
+    models = ("gemini-3.1-flash-lite", "gemini-flash-lite-latest")
+    for model in models:
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt
+                )
+                break
+            except APIError as error:
+                last_error = error
+                if error.code == 503 and attempt < 2:
+                    time.sleep(2 ** attempt)
+                    continue
+                if error.code in (404, 503):
+                    break
                 raise
-            time.sleep(2 ** attempt)
+        if response is not None:
+            break
 
+    if response is None:
+        raise last_error
     if not response.text:
         raise RuntimeError("The text generation service returned an empty response.")
     return response.text
