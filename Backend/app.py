@@ -55,7 +55,7 @@ Respond ONLY in {language}.
 def generate_speech(text, voice_id, locale, api_key):
     url = "https://global.api.murf.ai/v1/speech/stream"
     headers = {
-        "api-key": api_key,
+        "api-key": api_key.strip(),
         "Content-Type": "application/json"
     }
     data = {
@@ -80,7 +80,7 @@ def generate_speech(text, voice_id, locale, api_key):
 
 def generate_description(place, answer_type, language, api_key):
     prompt = PROMPTS[answer_type].format(place=place, language=language)
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=api_key.strip())
     response = None
     last_error = None
     models = ("gemini-3.1-flash-lite", "gemini-flash-lite-latest")
@@ -108,7 +108,7 @@ def generate_description(place, answer_type, language, api_key):
 def health():
     missing_api_keys = [
         key for key in ("GEMINI_API_KEY", "MURF_API_KEY")
-        if not os.getenv(key)
+        if not os.getenv(key, "").strip()
     ]
     return jsonify(
         status="ok",
@@ -141,7 +141,7 @@ def generate_audio_guide():
 
     missing_api_keys = [
         key for key in ("GEMINI_API_KEY", "MURF_API_KEY")
-        if not os.getenv(key)
+        if not os.getenv(key, "").strip()
     ]
     if missing_api_keys:
         return jsonify(
@@ -157,13 +157,13 @@ def generate_audio_guide():
             data["place"],
             answer_type,
             data["language"],
-            os.environ["GEMINI_API_KEY"]
+            os.environ["GEMINI_API_KEY"].strip()
         )
         audio_bytes = generate_speech(
             text_description,
             data["voiceId"],
             data["locale"],
-            os.environ["MURF_API_KEY"]
+            os.environ["MURF_API_KEY"].strip()
         )
     except APIError as error:
         app.logger.exception("Gemini text generation failed")
