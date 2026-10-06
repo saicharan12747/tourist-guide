@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r Backend/requirements.txt
-    startCommand: gunicorn --chdir Backend app:app
+    startCommand: gunicorn --timeout 180 --chdir Backend app:app
     healthCheckPath: /health
     envVars:
       - key: GEMINI_API_KEY

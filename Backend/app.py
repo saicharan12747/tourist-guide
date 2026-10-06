@@ -1,7 +1,6 @@
 import base64
 import os
 from pathlib import Path
-import time
 
 import requests
 from flask import Flask, jsonify, request, send_from_directory
@@ -86,23 +85,17 @@ def generate_description(place, answer_type, language, api_key):
     last_error = None
     models = ("gemini-3.1-flash-lite", "gemini-flash-lite-latest")
     for model in models:
-        for attempt in range(3):
-            try:
-                response = client.models.generate_content(
-                    model=model,
-                    contents=prompt
-                )
-                break
-            except APIError as error:
-                last_error = error
-                if error.code == 503 and attempt < 2:
-                    time.sleep(2 ** attempt)
-                    continue
-                if error.code in (404, 503):
-                    break
-                raise
-        if response is not None:
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt
+            )
             break
+        except APIError as error:
+            last_error = error
+            if error.code in (404, 503) and model != models[-1]:
+                continue
+            raise
 
     if response is None:
         raise last_error
