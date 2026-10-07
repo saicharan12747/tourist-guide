@@ -117,8 +117,11 @@ def health():
     )
 
 
-@app.get("/")
-def index():
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def index(path):
+    if path and (FRONTEND_DIR / path).exists():
+        return send_from_directory(FRONTEND_DIR, path)
     return send_from_directory(FRONTEND_DIR, "index.html")
 
 
