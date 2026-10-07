@@ -34,11 +34,12 @@ secrets and is excluded by `.gitignore`.
 
 1. Push this project to a GitHub repository. Keep `Backend/.env` out of Git.
 2. In Render, create a **Blueprint** and select the repository containing
-   `render.yaml`.
+   `render.yaml`. This config creates a Python Web Service named
+   `tourist-guide-web`; do not use a Static Site for this Flask app.
 3. Set the `GEMINI_API_KEY` and `MURF_API_KEY` values when Render requests them.
 4. Deploy. Render builds and starts the Flask app using the commands in
    `render.yaml`.
-5. Open the generated `https://<service-name>.onrender.com` URL. Check
+5. Open the generated `https://tourist-guide-web.onrender.com` URL. Check
    `/health` to confirm that the service reports `"configured": true`.
 
 The live app needs valid API keys configured as Render environment variables.

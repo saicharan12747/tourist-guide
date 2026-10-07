@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: tourist-guide
+    name: tourist-guide-web
     runtime: python
     plan: free
     buildCommand: pip install -r Backend/requirements.txt
